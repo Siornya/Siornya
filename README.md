@@ -22,7 +22,11 @@
 
 ## Github
 
+<div align="center">
+
 <img src="./assets/github-stats.svg" />
+
+</div>
 
 ## More
 
