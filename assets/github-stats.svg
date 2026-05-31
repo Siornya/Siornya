@@ -120,7 +120,7 @@
   <text x="40"
         y="130"
         class="text">
-    ✦ Total Contributions: 205
+    ✦ Total Contributions: 197
   </text>
 
   <text x="40"
@@ -152,7 +152,7 @@
 
         <rect x="160"
               y="246"
-              width="72.76372093023255"
+              width="77.07258919721924"
               height="11"
               rx="5.5"
               fill="url(#barGradient)"/>
@@ -160,7 +160,7 @@
         <text x="425"
               y="260"
               class="percent">
-          28.0%
+          29.6%
         </text>
       
         <text x="42"
@@ -178,7 +178,7 @@
 
         <rect x="160"
               y="284"
-              width="69.70015503875969"
+              width="75.78470218305905"
               height="11"
               rx="5.5"
               fill="url(#barGradient)"/>
@@ -186,7 +186,7 @@
         <text x="425"
               y="298"
               class="percent">
-          26.8%
+          29.1%
         </text>
       
         <text x="42"
@@ -204,7 +204,7 @@
 
         <rect x="160"
               y="322"
-              width="53.71720930232558"
+              width="56.03389760022919"
               height="11"
               rx="5.5"
               fill="url(#barGradient)"/>
@@ -212,42 +212,42 @@
         <text x="425"
               y="336"
               class="percent">
-          20.7%
+          21.6%
         </text>
       
         <text x="42"
               y="374"
-              class="lang">
-          Vue
-        </text>
-
-        <rect x="160"
-              y="360"
-              width="250"
-              height="11"
-              rx="5.5"
-              fill="#ffffff18"/>
-
-        <rect x="160"
-              y="360"
-              width="36.21514950166113"
-              height="11"
-              rx="5.5"
-              fill="url(#barGradient)"/>
-
-        <text x="425"
-              y="374"
-              class="percent">
-          13.9%
-        </text>
-      
-        <text x="42"
-              y="412"
               class="lang">
           Nunjucks
         </text>
 
         <rect x="160"
+              y="360"
+              width="250"
+              height="11"
+              rx="5.5"
+              fill="#ffffff18"/>
+
+        <rect x="160"
+              y="360"
+              width="28.794246279742993"
+              height="11"
+              rx="5.5"
+              fill="url(#barGradient)"/>
+
+        <text x="425"
+              y="374"
+              class="percent">
+          11.1%
+        </text>
+      
+        <text x="42"
+              y="412"
+              class="lang">
+          Vue
+        </text>
+
+        <rect x="160"
               y="398"
               width="250"
               height="11"
@@ -256,7 +256,7 @@
 
         <rect x="160"
               y="398"
-              width="27.603765227021043"
+              width="22.31456473974951"
               height="11"
               rx="5.5"
               fill="url(#barGradient)"/>
@@ -264,7 +264,7 @@
         <text x="425"
               y="412"
               class="percent">
-          10.6%
+          8.6%
         </text>
       
 
