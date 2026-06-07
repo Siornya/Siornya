@@ -120,7 +120,7 @@
   <text x="40"
         y="130"
         class="text">
-    ✦ Total Contributions: 197
+    ✦ Total Contributions: 230
   </text>
 
   <text x="40"
@@ -152,7 +152,7 @@
 
         <rect x="160"
               y="246"
-              width="77.07258919721924"
+              width="98.75594290078686"
               height="11"
               rx="5.5"
               fill="url(#barGradient)"/>
@@ -160,13 +160,13 @@
         <text x="425"
               y="260"
               class="percent">
-          29.6%
+          38.0%
         </text>
       
         <text x="42"
               y="298"
               class="lang">
-          JavaScript
+          Vue
         </text>
 
         <rect x="160"
@@ -178,7 +178,7 @@
 
         <rect x="160"
               y="284"
-              width="75.78470218305905"
+              width="71.112499185904"
               height="11"
               rx="5.5"
               fill="url(#barGradient)"/>
@@ -186,13 +186,13 @@
         <text x="425"
               y="298"
               class="percent">
-          29.1%
+          27.4%
         </text>
       
         <text x="42"
               y="336"
               class="lang">
-          Stylus
+          CSS
         </text>
 
         <rect x="160"
@@ -204,7 +204,7 @@
 
         <rect x="160"
               y="322"
-              width="56.03389760022919"
+              width="34.07959786618038"
               height="11"
               rx="5.5"
               fill="url(#barGradient)"/>
@@ -212,13 +212,13 @@
         <text x="425"
               y="336"
               class="percent">
-          21.6%
+          13.1%
         </text>
       
         <text x="42"
               y="374"
               class="lang">
-          Nunjucks
+          JavaScript
         </text>
 
         <rect x="160"
@@ -230,7 +230,7 @@
 
         <rect x="160"
               y="360"
-              width="28.794246279742993"
+              width="28.901118419884074"
               height="11"
               rx="5.5"
               fill="url(#barGradient)"/>
@@ -244,7 +244,7 @@
         <text x="42"
               y="412"
               class="lang">
-          Vue
+          PLpgSQL
         </text>
 
         <rect x="160"
@@ -256,7 +256,7 @@
 
         <rect x="160"
               y="398"
-              width="22.31456473974951"
+              width="27.150841627244684"
               height="11"
               rx="5.5"
               fill="url(#barGradient)"/>
@@ -264,7 +264,7 @@
         <text x="425"
               y="412"
               class="percent">
-          8.6%
+          10.4%
         </text>
       
 
