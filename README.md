@@ -28,6 +28,8 @@
 
 </div>
 
+*统计基于真实 commit，而非仓库语言占比。卡片由 GitHub Actions 调用官方 GraphQL API 生成*
+
 ## More
 
 *profile仓库经历两次消失两次复活，终于第三次上线了*

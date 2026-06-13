@@ -11,8 +11,8 @@ const COUNT_MODE = "churn";
 // “我的贡献”中忽略的语言
 const CONTRIB_EXCLUDE = new Set(["Markdown", "MDX", "YAML", "JSON", "TOML", "TeX"]);
 
-// 组织
-const ORG_LOGIN = "LONETRAIL-Lab";
+// 组织：填 "all" 统计你所属的全部组织；或填某个组织 login 只统计该组织
+const ORG_LOGIN = "all";
 
 // 增量缓存文件
 const CACHE_PATH = "data/contrib-cache.json";
@@ -120,22 +120,44 @@ const login = viewer.login;
 const createdYear = new Date(viewer.createdAt).getFullYear();
 const nowYear = new Date().getFullYear();
 
+// 解析要统计的组织列表（ORG_LOGIN === "all" -> 你所属的全部组织）
+async function getOrgLogins() {
+  const q = `
+    query($cursor: String) {
+      viewer {
+        organizations(first: 100, after: $cursor) {
+          nodes { login }
+          pageInfo { hasNextPage endCursor }
+        }
+      }
+    }
+  `;
+  const logins = [];
+  let cursor = null;
+  do {
+    const r = await gql(q, { cursor });
+    const page = r.viewer.organizations;
+    for (const n of page.nodes) logins.push(n.login);
+    cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
+  } while (cursor);
+  return logins;
+}
+
+const orgLogins = ORG_LOGIN === "all" ? await getOrgLogins() : [ORG_LOGIN];
+const orgSet = new Set(orgLogins);
+console.log(`Organizations: ${orgLogins.join(", ") || "(none)"}`);
+
 // =====================================================================
-// 2) 整库语言构成 + Total Stars
-//    你拥有的 public/private 非 fork 仓库 + 组织非 fork 仓库
+// 2) Total Stars（你拥有的 public/private 非 fork 仓库）
 // =====================================================================
-async function getComposition() {
-  const langs = new Map();
+async function getTotalStars() {
   let stars = 0;
 
   const ownedQ = `
     query($cursor: String, $privacy: RepositoryPrivacy!) {
       viewer {
         repositories(first: 100, after: $cursor, ownerAffiliations: [OWNER], isFork: false, privacy: $privacy) {
-          nodes {
-            stargazerCount
-            languages(first: 10) { edges { size node { name } } }
-          }
+          nodes { stargazerCount }
           pageInfo { hasNextPage endCursor }
         }
       }
@@ -146,40 +168,15 @@ async function getComposition() {
     do {
       const r = await gql(ownedQ, { cursor, privacy });
       const page = r.viewer.repositories;
-      for (const n of page.nodes) {
-        stars += n.stargazerCount;
-        for (const e of n.languages.edges)
-          langs.set(e.node.name, (langs.get(e.node.name) || 0) + e.size);
-      }
+      for (const n of page.nodes) stars += n.stargazerCount;
       cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
     } while (cursor);
   }
 
-  const orgQ = `
-    query($org: String!, $cursor: String) {
-      organization(login: $org) {
-        repositories(first: 100, after: $cursor, isFork: false) {
-          nodes { languages(first: 10) { edges { size node { name } } } }
-          pageInfo { hasNextPage endCursor }
-        }
-      }
-    }
-  `;
-  let cursor = null;
-  do {
-    const r = await gql(orgQ, { org: ORG_LOGIN, cursor });
-    const repos = r.organization?.repositories;
-    if (!repos) break;
-    for (const n of repos.nodes)
-      for (const e of n.languages.edges)
-        langs.set(e.node.name, (langs.get(e.node.name) || 0) + e.size);
-    cursor = repos.pageInfo.hasNextPage ? repos.pageInfo.endCursor : null;
-  } while (cursor);
-
-  return { langs, stars };
+  return stars;
 }
 
-const { langs: compositionLangs, stars: totalStars } = await getComposition();
+const totalStars = await getTotalStars();
 
 // =====================================================================
 // 3) 逐年找出“所有你提交过的仓库”，并累加 all-time 总贡献数
@@ -210,7 +207,7 @@ for (let year = createdYear; year <= nowYear; year++) {
 
   for (const { repository } of cc.commitContributionsByRepository) {
     const owner = repository.owner.login;
-    if (owner === login || owner === ORG_LOGIN)
+    if (owner === login || orgSet.has(owner))
       repoSet.add(repository.nameWithOwner);
   }
 }
@@ -326,7 +323,7 @@ for (const entry of Object.values(cache)) {
 }
 
 // =====================================================================
-// 5) 渲染左右两列 SVG
+// 5) 渲染 SVG
 // =====================================================================
 // 取前 5，其余汇总成 Others
 function buildRows(map) {
@@ -339,15 +336,13 @@ function buildRows(map) {
   return { rows, total };
 }
 
-// 左 = My Contributions，右 = Repository Composition
+// My Contributions
 const left = buildRows(contribLangs);
-const right = buildRows(compositionLangs);
-const maxRows = Math.max(left.rows.length, right.rows.length, 1);
+const maxRows = Math.max(left.rows.length, 1);
 
 console.log("My contributions:", left.rows);
-console.log("Repo composition:", right.rows);
 
-const cardWidth = 760;
+const cardWidth = 420;
 const cardHeight = 255 + maxRows * 38;
 
 function renderColumn({ rows, total }, colX, title) {
@@ -502,9 +497,8 @@ const svg = `
     ✦ Total Stars: ${totalStars}
   </text>
 
-  <!-- two columns (swapped) -->
+  <!-- contributions -->
   ${renderColumn(left, 40, "My Contributions")}
-  ${renderColumn(right, 400, "Repository Composition")}
 
 </svg>
 `;
