@@ -1,20 +1,18 @@
 {
   "Siornya/XCPC-algorithm-reference": {
-    "lastDate": "2026-06-02T13:00:17Z",
+    "lastDate": "2026-06-13T11:23:40Z",
     "boundaryShas": [
-      "cd4a656b7733f9591341e4a4192c7731f31a56e0"
+      "9375cf98c6cb0e8a32e2d1abb7573c0429360cc1"
     ],
     "add": {
       "YAML": 18,
-      "C++": 8022,
-      "Markdown": 3519,
-      "Python": 35
+      "C++": 3224,
+      "Markdown": 3396
     },
     "del": {
       "YAML": 0,
-      "C++": 5155,
-      "Markdown": 132,
-      "Python": 35
+      "C++": 0,
+      "Markdown": 0
     }
   },
   "Siornya/nonebot-plugin-R6States": {
@@ -43,16 +41,16 @@
       "5c2de6381e0984ab0c9b83b47353a89cf6134ac9"
     ],
     "add": {
-      "YAML": 89,
+      "Markdown": 179,
       "CSS": 2313,
       "JavaScript": 350,
-      "Markdown": 179
+      "YAML": 89
     },
     "del": {
-      "YAML": 21,
+      "Markdown": 0,
       "CSS": 856,
       "JavaScript": 79,
-      "Markdown": 0
+      "YAML": 21
     }
   },
   "LONETRAIL-Lab/MilkyWay": {
@@ -91,22 +89,22 @@
       "d0a4c695fe15ae2e4ce427ca869844a35456b446"
     ],
     "add": {
-      "TypeScript": 260,
-      "Vue": 2148,
-      "CSS": 167,
-      "HTML": 18,
-      "YAML": 38,
       "JSON": 116,
-      "Markdown": 94
+      "Vue": 2148,
+      "TypeScript": 260,
+      "CSS": 167,
+      "Markdown": 94,
+      "YAML": 38,
+      "HTML": 18
     },
     "del": {
-      "TypeScript": 54,
-      "Vue": 819,
-      "CSS": 43,
-      "HTML": 5,
-      "YAML": 0,
       "JSON": 4,
-      "Markdown": 0
+      "Vue": 819,
+      "TypeScript": 54,
+      "CSS": 43,
+      "Markdown": 0,
+      "YAML": 0,
+      "HTML": 5
     }
   },
   "LONETRAIL-Lab/Deneb": {
@@ -153,20 +151,20 @@
     "add": {
       "HTML": 19,
       "Vue": 1244,
-      "CSS": 36,
       "YAML": 77,
       "JSON": 154,
       "Markdown": 54,
-      "TypeScript": 127
+      "TypeScript": 127,
+      "CSS": 36
     },
     "del": {
       "HTML": 6,
       "Vue": 363,
-      "CSS": 0,
       "YAML": 1,
       "JSON": 0,
       "Markdown": 0,
-      "TypeScript": 2
+      "TypeScript": 2,
+      "CSS": 0
     }
   },
   "Siornya/StS2-Virtuosa": {
@@ -195,8 +193,8 @@
       "JavaScript": 964,
       "Markdown": 725,
       "TypeScript": 269,
-      "JSON": 102,
-      "CSS": 174
+      "CSS": 174,
+      "JSON": 102
     },
     "del": {
       "SQL": 678,
@@ -205,8 +203,8 @@
       "JavaScript": 360,
       "Markdown": 20,
       "TypeScript": 24,
-      "JSON": 2,
-      "CSS": 4
+      "CSS": 4,
+      "JSON": 2
     }
   },
   "LONETRAIL-Lab/organization-docs": {
@@ -222,20 +220,20 @@
     }
   },
   "Siornya/Siornya": {
-    "lastDate": "2026-06-02T12:28:22Z",
+    "lastDate": "2026-06-13T11:17:31Z",
     "boundaryShas": [
-      "8e6fd80af29ed888d92a918ebd2d274eb4406c7d"
+      "02d4561ddb83dbfe1038d00fe719e17f88d06a02"
     ],
     "add": {
-      "YAML": 43,
       "Markdown": 65,
-      "JavaScript": 357,
-      "JSON": 5
+      "JavaScript": 713,
+      "YAML": 44,
+      "JSON": 279
     },
     "del": {
-      "YAML": 4,
       "Markdown": 16,
-      "JavaScript": 9,
+      "JavaScript": 198,
+      "YAML": 5,
       "JSON": 0
     }
   },
