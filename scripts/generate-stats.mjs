@@ -3,167 +3,375 @@ import { graphql } from "@octokit/graphql";
 
 const token = process.env.GITHUB_TOKEN;
 
-const data = await graphql(
-  `
-    query($orgName: String!) {
+// 右列“我的贡献”统计方法：
+//   "additions" -> 新增的行
+//   "churn"     -> 新增 + 删除
+const COUNT_MODE = "churn";
+
+// “我的贡献”中忽略的语言
+const CONTRIB_EXCLUDE = new Set(["Markdown", "MDX", "YAML", "JSON", "TOML", "TeX"]);
+
+// 组织
+const ORG_LOGIN = "LONETRAIL-Lab";
+
+// 增量缓存文件
+const CACHE_PATH = "data/contrib-cache.json";
+
+const gql = graphql.defaults({
+  headers: { authorization: `token ${token}` },
+});
+
+const GH_API = "https://api.github.com";
+
+let rateLimited = false;
+
+async function ghRest(path) {
+  if (rateLimited) return null;
+
+  const res = await fetch(`${GH_API}${path}`, {
+    headers: {
+      authorization: `token ${token}`,
+      accept: "application/vnd.github+json",
+      "user-agent": "siornya-stats",
+    },
+  });
+
+  const remaining = Number(res.headers.get("x-ratelimit-remaining") ?? "1");
+
+  if (res.status === 403 && remaining === 0) {
+    console.warn("Rate limit reached — stopping with partial data.");
+    rateLimited = true;
+    return null;
+  }
+
+  if (!res.ok) {
+    if (res.status === 404 || res.status === 409) return null; // 空仓库/无权限等，跳过
+    throw new Error(`REST ${path} -> ${res.status} ${res.statusText}`);
+  }
+
+  if (remaining > 0 && remaining < 40) {
+    console.warn(`Rate limit low (${remaining} left) — stopping early.`);
+    rateLimited = true;
+  }
+
+  return res.json();
+}
+
+// 扩展名 -> 语言
+const EXT_LANGUAGE = {
+  js: "JavaScript", jsx: "JavaScript", mjs: "JavaScript", cjs: "JavaScript",
+  ts: "TypeScript", tsx: "TypeScript",
+  py: "Python", pyw: "Python",
+  java: "Java", kt: "Kotlin", kts: "Kotlin", scala: "Scala", groovy: "Groovy",
+  c: "C", h: "C",
+  cpp: "C++", cc: "C++", cxx: "C++", hpp: "C++", hh: "C++", hxx: "C++",
+  cs: "C#",
+  go: "Go", rs: "Rust", rb: "Ruby", php: "PHP", swift: "Swift", dart: "Dart",
+  m: "Objective-C", mm: "Objective-C++",
+  sh: "Shell", bash: "Shell", zsh: "Shell", ps1: "PowerShell",
+  lua: "Lua", r: "R", jl: "Julia", pl: "Perl", ex: "Elixir", exs: "Elixir",
+  erl: "Erlang", hs: "Haskell", clj: "Clojure", elm: "Elm", nim: "Nim",
+  html: "HTML", htm: "HTML", css: "CSS", scss: "SCSS", sass: "Sass", less: "Less",
+  vue: "Vue", svelte: "Svelte", astro: "Astro",
+  sql: "SQL", graphql: "GraphQL", gql: "GraphQL",
+  json: "JSON", yaml: "YAML", yml: "YAML", toml: "TOML",
+  md: "Markdown", mdx: "MDX", tex: "TeX",
+  ipynb: "Jupyter Notebook", sol: "Solidity", zig: "Zig",
+};
+
+const IGNORED_FILES = new Set([
+  "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "composer.lock",
+  "cargo.lock", "poetry.lock", "go.sum",
+]);
+
+function languageOf(filename) {
+  const base = filename.split("/").pop().toLowerCase();
+  if (IGNORED_FILES.has(base)) return null;
+  if (base.endsWith(".min.js") || base.endsWith(".min.css")) return null;
+  if (base === "dockerfile") return "Dockerfile";
+  const ext = base.includes(".") ? base.split(".").pop() : "";
+  return EXT_LANGUAGE[ext] ?? null;
+}
+
+// 简单并发池
+async function pool(items, size, worker) {
+  const queue = [...items];
+  const runners = Array.from({ length: size }, async () => {
+    while (queue.length) {
+      if (rateLimited) break;
+      await worker(queue.shift());
+    }
+  });
+  await Promise.all(runners);
+}
+
+const escapeXml = (s) =>
+  String(s).replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
+
+const maxDate = (a, b) => (!a ? b : !b ? a : a > b ? a : b);
+const topN = (map, n = 5) =>
+  [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
+
+// =====================================================================
+// 1) 基本信息
+// =====================================================================
+const { viewer } = await gql(`query { viewer { login createdAt } }`);
+const login = viewer.login;
+const createdYear = new Date(viewer.createdAt).getFullYear();
+const nowYear = new Date().getFullYear();
+
+// =====================================================================
+// 2) 整库语言构成 + Total Stars
+//    你拥有的 public/private 非 fork 仓库 + 组织非 fork 仓库
+// =====================================================================
+async function getComposition() {
+  const langs = new Map();
+  let stars = 0;
+
+  const ownedQ = `
+    query($cursor: String, $privacy: RepositoryPrivacy!) {
       viewer {
-        login
-
-        contributionsCollection {
-          contributionCalendar {
-            totalContributions
-          }
-        }
-
-        repositories(
-          first: 100
-          ownerAffiliations: [OWNER]
-          isFork: false
-          privacy: PRIVATE
-        ) {
+        repositories(first: 100, after: $cursor, ownerAffiliations: [OWNER], isFork: false, privacy: $privacy) {
           nodes {
-            name
             stargazerCount
-            languages(first: 10) {
-              edges {
-                size
-                node {
-                  name
-                }
-              }
-            }
+            languages(first: 10) { edges { size node { name } } }
           }
-        }
-
-        publicRepositories: repositories(
-          first: 100
-          ownerAffiliations: OWNER
-          isFork: false
-          privacy: PUBLIC
-        ) {
-          nodes {
-            name
-            stargazerCount
-            languages(first: 10) {
-              edges {
-                size
-                node {
-                  name
-                }
-              }
-            }
-          }
-        }
-      }
-      
-      organization(login: $orgName) {
-        repositories(
-          first: 100
-          isFork: false
-        ) {
-          nodes {
-            name
-            stargazerCount
-            languages(first: 10) {
-              edges {
-                size
-                node { 
-                  name 
-                }
-              }
-            }
-          }
+          pageInfo { hasNextPage endCursor }
         }
       }
     }
-  `,
-  {
-    orgName: "LONETRAIL-Lab",
-    headers: {
-      authorization: `token ${token}`,
-    },
-  },
-);
+  `;
+  for (const privacy of ["PUBLIC", "PRIVATE"]) {
+    let cursor = null;
+    do {
+      const r = await gql(ownedQ, { cursor, privacy });
+      const page = r.viewer.repositories;
+      for (const n of page.nodes) {
+        stars += n.stargazerCount;
+        for (const e of n.languages.edges)
+          langs.set(e.node.name, (langs.get(e.node.name) || 0) + e.size);
+      }
+      cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
+    } while (cursor);
+  }
 
-const totalCommits =
-  data.viewer.contributionsCollection.contributionCalendar.totalContributions;
+  const orgQ = `
+    query($org: String!, $cursor: String) {
+      organization(login: $org) {
+        repositories(first: 100, after: $cursor, isFork: false) {
+          nodes { languages(first: 10) { edges { size node { name } } } }
+          pageInfo { hasNextPage endCursor }
+        }
+      }
+    }
+  `;
+  let cursor = null;
+  do {
+    const r = await gql(orgQ, { org: ORG_LOGIN, cursor });
+    const repos = r.organization?.repositories;
+    if (!repos) break;
+    for (const n of repos.nodes)
+      for (const e of n.languages.edges)
+        langs.set(e.node.name, (langs.get(e.node.name) || 0) + e.size);
+    cursor = repos.pageInfo.hasNextPage ? repos.pageInfo.endCursor : null;
+  } while (cursor);
 
-const repos = [
-  ...data.viewer.repositories.nodes,
-  ...data.viewer.publicRepositories.nodes,
-  ...(data.organization?.repositories?.nodes || []),
-];
+  return { langs, stars };
+}
 
-let totalStars = 0;
+const { langs: compositionLangs, stars: totalStars } = await getComposition();
 
-const languageBytes = new Map();
+// =====================================================================
+// 3) 逐年找出“所有你提交过的仓库”，并累加 all-time 总贡献数
+// =====================================================================
+const contribQuery = `
+  query($from: DateTime!, $to: DateTime!) {
+    viewer {
+      contributionsCollection(from: $from, to: $to) {
+        contributionCalendar { totalContributions }
+        commitContributionsByRepository(maxRepositories: 100) {
+          repository { nameWithOwner owner { login } }
+        }
+      }
+    }
+  }
+`;
 
-for (const repo of repos) {
-  totalStars += repo.stargazerCount;
+let totalContributions = 0;
+const repoSet = new Set();
 
-  for (const lang of repo.languages.edges) {
-    const name = lang.node.name;
-    const size = lang.size;
+for (let year = createdYear; year <= nowYear; year++) {
+  const from = new Date(Date.UTC(year, 0, 1)).toISOString();
+  const to = new Date(Date.UTC(year, 11, 31, 23, 59, 59)).toISOString();
 
-    languageBytes.set(name, (languageBytes.get(name) || 0) + size);
+  const { viewer: v } = await gql(contribQuery, { from, to });
+  const cc = v.contributionsCollection;
+  totalContributions += cc.contributionCalendar.totalContributions;
+
+  for (const { repository } of cc.commitContributionsByRepository) {
+    const owner = repository.owner.login;
+    if (owner === login || owner === ORG_LOGIN)
+      repoSet.add(repository.nameWithOwner);
   }
 }
 
-const sortedLanguages = [...languageBytes.entries()].sort(
-  (a, b) => b[1] - a[1],
-);
+// =====================================================================
+// 4) 逐仓库增量统计你的提交（带缓存）
+// =====================================================================
+let cache = {};
+try {
+  cache = JSON.parse(fs.readFileSync(CACHE_PATH, "utf8"));
+} catch {
+  cache = {};
+}
 
-const topLanguages = sortedLanguages.slice(0, 5);
+// 取该仓库自上次以来的新 commit（按 lastDate 限定 + 边界 SHA 去重）
+async function fetchNewCommits(repoFullName, entry) {
+  const sinceParam = entry.lastDate
+    ? `&since=${encodeURIComponent(entry.lastDate)}`
+    : "";
+  const boundary = new Set(entry.boundaryShas);
+  const out = [];
 
-const totalLanguageBytes = topLanguages.reduce(
-  (sum, [, size]) => sum + size,
-  0,
-);
+  for (let page = 1; ; page++) {
+    if (rateLimited) break;
+    const list = await ghRest(
+      `/repos/${repoFullName}/commits?author=${encodeURIComponent(login)}&per_page=100&page=${page}${sinceParam}`,
+    );
+    if (!list || list.length === 0) break;
+    for (const c of list) {
+      if (boundary.has(c.sha)) continue; // 上次已统计过的边界 commit
+      const date = c.commit?.committer?.date || c.commit?.author?.date || null;
+      out.push({ sha: c.sha, date });
+    }
+    if (list.length < 100) break;
+  }
+  return out;
+}
 
-const cardHeight = 260 + topLanguages.length * 36;
+console.log(`Walking your commits across ${repoSet.size} repos...`);
 
-const languageBars = topLanguages
-  .map(([name, size], index) => {
-    const percent = ((size / totalLanguageBytes) * 100).toFixed(1);
+for (const repoFullName of repoSet) {
+  if (rateLimited) break;
 
-    const barWidth = (size / totalLanguageBytes) * 260;
+  const entry = cache[repoFullName] || {
+    lastDate: null,
+    boundaryShas: [],
+    add: {},
+    del: {},
+  };
 
-    const y = 240 + index * 36;
+  const newCommits = await fetchNewCommits(repoFullName, entry);
+  if (!newCommits.length) {
+    cache[repoFullName] = entry;
+    continue;
+  }
 
-    return `
-      <text x="40"
-            y="${y}"
-            class="lang">
-        ${name}
-      </text>
+  // 累加到临时对象；只有整仓完整处理完才并入，避免限流中途导致重复/漏算
+  const tmpAdd = {};
+  const tmpDel = {};
 
-      <rect x="150"
-            y="${y - 14}"
-            width="260"
-            height="10"
-            rx="5"
-            fill="#2a2a2a"/>
+  await pool(newCommits, 6, async ({ sha }) => {
+    const detail = await ghRest(`/repos/${repoFullName}/commits/${sha}`);
+    if (!detail?.files) return;
+    for (const f of detail.files) {
+      const lang = languageOf(f.filename);
+      if (!lang) continue;
+      tmpAdd[lang] = (tmpAdd[lang] || 0) + (f.additions || 0);
+      tmpDel[lang] = (tmpDel[lang] || 0) + (f.deletions || 0);
+    }
+  });
 
-      <rect x="150"
-            y="${y - 14}"
-            width="${barWidth}"
-            height="10"
-            rx="5"
-            fill="#d3bd8c"/>
+  if (rateLimited) {
+    // 本仓未跑完：不推进 lastDate，下次重做（entry 维持原样）
+    cache[repoFullName] = entry;
+    break;
+  }
 
-      <text x="425"
-            y="${y}"
-            class="percent">
-        ${percent}%
-      </text>
-    `;
-  })
-  .join("");
+  for (const [k, v] of Object.entries(tmpAdd))
+    entry.add[k] = (entry.add[k] || 0) + v;
+  for (const [k, v] of Object.entries(tmpDel))
+    entry.del[k] = (entry.del[k] || 0) + v;
+
+  // 推进边界
+  let newest = entry.lastDate;
+  for (const c of newCommits) newest = maxDate(newest, c.date);
+  let boundaryShas = newCommits.filter((c) => c.date === newest).map((c) => c.sha);
+  if (newest === entry.lastDate)
+    boundaryShas = [...new Set([...entry.boundaryShas, ...boundaryShas])];
+  entry.lastDate = newest;
+  entry.boundaryShas = boundaryShas;
+
+  cache[repoFullName] = entry;
+}
+
+// 保存缓存（即使限流也保存已完成部分的进度）
+fs.mkdirSync("data", { recursive: true });
+fs.writeFileSync(CACHE_PATH, JSON.stringify(cache, null, 2));
+
+// 汇总右列语言
+const contribLangs = new Map();
+for (const entry of Object.values(cache)) {
+  const add = entry.add || {};
+  const del = entry.del || {};
+  const names = new Set([...Object.keys(add), ...Object.keys(del)]);
+  for (const name of names) {
+    if (CONTRIB_EXCLUDE.has(name)) continue;
+    const weight =
+      COUNT_MODE === "churn"
+        ? (add[name] || 0) + (del[name] || 0)
+        : add[name] || 0;
+    if (weight > 0) contribLangs.set(name, (contribLangs.get(name) || 0) + weight);
+  }
+}
+
+// =====================================================================
+// 5) 渲染左右两列 SVG
+// =====================================================================
+// 取前 5，其余汇总成 Others
+function buildRows(map) {
+  const sorted = [...map.entries()].sort((a, b) => b[1] - a[1]);
+  const total = sorted.reduce((s, [, v]) => s + v, 0) || 1;
+  const top = sorted.slice(0, 5);
+  const othersVal = total - top.reduce((s, [, v]) => s + v, 0);
+  const rows = [...top];
+  if (othersVal > 0.5) rows.push(["Others", othersVal]);
+  return { rows, total };
+}
+
+// 左 = My Contributions，右 = Repository Composition
+const left = buildRows(contribLangs);
+const right = buildRows(compositionLangs);
+const maxRows = Math.max(left.rows.length, right.rows.length, 1);
+
+console.log("My contributions:", left.rows);
+console.log("Repo composition:", right.rows);
+
+const cardWidth = 760;
+const cardHeight = 255 + maxRows * 38;
+
+function renderColumn({ rows, total }, colX, title) {
+  let out = `
+    <text x="${colX}" y="220" class="text">${title}</text>`;
+  rows.forEach(([name, size], i) => {
+    const percent = ((size / total) * 100).toFixed(1);
+    const barW = (size / total) * 140;
+    const y = 260 + i * 38;
+    const isOthers = name === "Others";
+    const barFill = isOthers ? "#ffffff30" : "url(#barGradient)";
+    out += `
+      <text x="${colX}" y="${y}" class="lang"${isOthers ? ' opacity="0.7"' : ""}>${escapeXml(name)}</text>
+      <rect x="${colX + 95}" y="${y - 14}" width="140" height="11" rx="5.5" fill="#ffffff18"/>
+      <rect x="${colX + 95}" y="${y - 14}" width="${barW}" height="11" rx="5.5" fill="${barFill}"/>
+      <text x="${colX + 245}" y="${y}" class="percent">${percent}%</text>`;
+  });
+  return out;
+}
 
 const svg = `
-<svg width="520"
+<svg width="${cardWidth}"
      height="${cardHeight}"
-     viewBox="0 0 520 ${cardHeight}"
+     viewBox="0 0 ${cardWidth} ${cardHeight}"
      xmlns="http://www.w3.org/2000/svg">
 
   <defs>
@@ -175,10 +383,13 @@ const svg = `
                     y2="100%">
 
       <stop offset="0%"
-            stop-color="#2b1d2e"/>
+            stop-color="#2f1d30"/>
+
+      <stop offset="55%"
+            stop-color="#241a2b"/>
 
       <stop offset="100%"
-            stop-color="#1a1a26"/>
+            stop-color="#171622"/>
     </linearGradient>
 
     <linearGradient id="barGradient"
@@ -246,7 +457,7 @@ const svg = `
         filter="url(#shadow)"/>
 
   <!-- soft glow -->
-  <circle cx="430"
+  <circle cx="${cardWidth - 90}"
           cy="70"
           r="90"
           fill="#ffb7d5"
@@ -271,7 +482,7 @@ const svg = `
     stroke="none"
     />
   </g>
-  
+
   <text x="38"
         y="82"
         class="small">
@@ -282,7 +493,7 @@ const svg = `
   <text x="40"
         y="130"
         class="text">
-    ✦ Total Contributions: ${totalCommits}
+    ✦ Total Contributions: ${totalContributions}
   </text>
 
   <text x="40"
@@ -291,58 +502,14 @@ const svg = `
     ✦ Total Stars: ${totalStars}
   </text>
 
-  <!-- section -->
-  <text x="40"
-        y="220"
-        class="text">
-    Top Languages
-  </text>
-
-  ${topLanguages
-    .map(([name, size], index) => {
-      const percent = ((size / totalLanguageBytes) * 100).toFixed(1);
-
-      const barWidth = (size / totalLanguageBytes) * 260;
-
-      const y = 260 + index * 38;
-
-      return `
-        <text x="42"
-              y="${y}"
-              class="lang">
-          ${name}
-        </text>
-
-        <rect x="160"
-              y="${y - 14}"
-              width="250"
-              height="11"
-              rx="5.5"
-              fill="#ffffff18"/>
-
-        <rect x="160"
-              y="${y - 14}"
-              width="${barWidth}"
-              height="11"
-              rx="5.5"
-              fill="url(#barGradient)"/>
-
-        <text x="425"
-              y="${y}"
-              class="percent">
-          ${percent}%
-        </text>
-      `;
-    })
-    .join("")}
+  <!-- two columns (swapped) -->
+  ${renderColumn(left, 40, "My Contributions")}
+  ${renderColumn(right, 400, "Repository Composition")}
 
 </svg>
 `;
 
-fs.mkdirSync("assets", {
-  recursive: true,
-});
-
+fs.mkdirSync("assets", { recursive: true });
 fs.writeFileSync("assets/github-stats.svg", svg);
 
 console.log("Generated github-stats.svg");
