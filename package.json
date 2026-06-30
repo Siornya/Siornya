@@ -1,0 +1,14 @@
+{
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "generate": "node scripts/generate-stats.ts"
+  },
+  "dependencies": {
+    "@octokit/graphql": "^9.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.0"
+  }
+}

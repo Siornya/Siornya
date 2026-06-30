@@ -1,0 +1,66 @@
+name: Update GitHub Stats
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out profile repository
+        uses: actions/checkout@v6
+
+      - name: Check out private stats data
+        uses: actions/checkout@v6
+        with:
+          repository: Siornya/Siornya-profile-data
+          token: ${{ secrets.PAT_1 }}
+          path: stats-data
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - run: npm ci
+
+      - name: Generate SVG
+        run: npm run generate
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_1 }}
+          STATS_DATA_DIR: stats-data
+
+      - name: Commit private stats data
+        run: |
+          git -C stats-data config user.name "github-actions[bot]"
+          git -C stats-data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git -C stats-data add contrib-cache.json clone-cache.json
+
+          if git -C stats-data diff --cached --quiet; then
+            echo "No private stats data changes to commit."
+          else
+            git -C stats-data commit -m "Update profile stats data"
+            git -C stats-data push
+          fi
+
+      - name: Commit SVG
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add assets/github-stats.svg
+
+          if git diff --cached --quiet; then
+            echo "No stats changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Update GitHub stats"
+          git push
