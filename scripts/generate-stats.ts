@@ -83,7 +83,7 @@ interface RestCommitDetail {
 const COUNT_MODE = "churn";
 
 // “我的贡献”中忽略的语言
-const CONTRIB_EXCLUDE = new Set(["Markdown", "MDX", "YAML", "JSON", "TOML", "TeX"]);
+const CONTRIB_EXCLUDE = new Set(["Markdown", "MDX", "YAML", "JSON", "TOML", "TeX", "CSS"]);
 
 // 组织：填 "all" 统计你所属的全部组织；或填某个组织 login 只统计该组织
 const ORG_LOGIN = "all";
