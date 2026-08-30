@@ -123,7 +123,7 @@
   <text x="40"
         y="130"
         class="text">
-    ✦ Total Contributions: 360
+    ✦ Total Contributions: 362
   </text>
 
   <text x="40"
@@ -135,7 +135,7 @@
   <text x="40"
         y="198"
         class="text">
-    ✦ Total Clones: 559
+    ✦ Total Clones: 578
   </text>
 
   <!-- contributions -->
@@ -143,27 +143,27 @@
     <text x="40" y="250" class="text">My Contributions</text>
       <text x="40" y="290" class="lang">C++</text>
       <rect x="135" y="276" width="140" height="11" rx="5.5" fill="#ffffff18"/>
-      <rect x="135" y="276" width="60.84237210655363" height="11" rx="5.5" fill="url(#barGradient)"/>
-      <text x="285" y="290" class="percent">43.5%</text>
+      <rect x="135" y="276" width="60.02172843555264" height="11" rx="5.5" fill="url(#barGradient)"/>
+      <text x="285" y="290" class="percent">42.9%</text>
       <text x="40" y="328" class="lang">Vue</text>
       <rect x="135" y="314" width="140" height="11" rx="5.5" fill="#ffffff18"/>
-      <rect x="135" y="314" width="29.23284710967045" height="11" rx="5.5" fill="url(#barGradient)"/>
-      <text x="285" y="328" class="percent">20.9%</text>
+      <rect x="135" y="314" width="28.838553624139063" height="11" rx="5.5" fill="url(#barGradient)"/>
+      <text x="285" y="328" class="percent">20.6%</text>
       <text x="40" y="366" class="lang">Python</text>
       <rect x="135" y="352" width="140" height="11" rx="5.5" fill="#ffffff18"/>
-      <rect x="135" y="352" width="20.517391846403193" height="11" rx="5.5" fill="url(#barGradient)"/>
-      <text x="285" y="366" class="percent">14.7%</text>
+      <rect x="135" y="352" width="22.128976713676614" height="11" rx="5.5" fill="url(#barGradient)"/>
+      <text x="285" y="366" class="percent">15.8%</text>
       <text x="40" y="404" class="lang">C</text>
       <rect x="135" y="390" width="140" height="11" rx="5.5" fill="#ffffff18"/>
-      <rect x="135" y="390" width="12.526285168100403" height="11" rx="5.5" fill="url(#barGradient)"/>
-      <text x="285" y="404" class="percent">8.9%</text>
+      <rect x="135" y="390" width="12.3573302722204" height="11" rx="5.5" fill="url(#barGradient)"/>
+      <text x="285" y="404" class="percent">8.8%</text>
       <text x="40" y="442" class="lang">TypeScript</text>
       <rect x="135" y="428" width="140" height="11" rx="5.5" fill="#ffffff18"/>
-      <rect x="135" y="428" width="10.658687611685991" height="11" rx="5.5" fill="url(#barGradient)"/>
-      <text x="285" y="442" class="percent">7.6%</text>
+      <rect x="135" y="428" width="10.51492292554936" height="11" rx="5.5" fill="url(#barGradient)"/>
+      <text x="285" y="442" class="percent">7.5%</text>
       <text x="40" y="480" class="lang" opacity="0.7">Others</text>
       <rect x="135" y="466" width="140" height="11" rx="5.5" fill="#ffffff18"/>
-      <rect x="135" y="466" width="6.222416157586336" height="11" rx="5.5" fill="#ffffff30"/>
+      <rect x="135" y="466" width="6.138488028861922" height="11" rx="5.5" fill="#ffffff30"/>
       <text x="285" y="480" class="percent">4.4%</text>
 
 </svg>
