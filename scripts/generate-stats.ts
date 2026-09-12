@@ -7,6 +7,11 @@ if (!token) throw new Error("GITHUB_TOKEN is required.");
 
 type NumberMap = Record<string, number>;
 
+interface StarCache {
+	total: number;
+	lastCount: number;
+}
+
 interface CloneCache {
   trackingStartedAt: string | null;
   total: number;
@@ -94,6 +99,7 @@ const DATA_DIR =
   path.resolve("..", "Siornya-profile-data");
 const CACHE_PATH = path.join(DATA_DIR, "contrib-cache.json");
 const CLONE_CACHE_PATH = path.join(DATA_DIR, "clone-cache.json");
+const STAR_CACHE_PATH = path.join(DATA_DIR, "star-cache.json");
 
 const gql = graphql.defaults({
   headers: { authorization: `token ${token}` },
@@ -285,8 +291,34 @@ async function getOwnedRepositories(): Promise<{
   return { repositories, stars };
 }
 
-const { repositories: ownedRepositories, stars: totalStars } =
-  await getOwnedRepositories();
+const { repositories: ownedRepositories, stars: currentStars } =
+	await getOwnedRepositories();
+
+let starCache: StarCache = { total: 0, lastCount: 0 };
+try {
+	const parsed = JSON.parse(
+		fs.readFileSync(STAR_CACHE_PATH, "utf8"),
+	) as StarCache;
+	if (
+		!Number.isSafeInteger(parsed?.total) || parsed.total < 0 ||
+		!Number.isSafeInteger(parsed?.lastCount) || parsed.lastCount < 0
+	) {
+		throw new Error("Invalid star cache: total and lastCount must be non-negative integers.");
+	}
+	starCache = parsed;
+} catch (error) {
+	// 只有缓存不存在时才初始化，避免读取失败或损坏导致累计值归零。
+	if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+}
+
+// 仅累加两次快照间的正向差值；下降时也更新基准，下次从新基准计算。
+starCache.total += Math.max(0, currentStars - starCache.lastCount);
+starCache.lastCount = currentStars;
+
+fs.mkdirSync(DATA_DIR, { recursive: true });
+fs.writeFileSync(STAR_CACHE_PATH, JSON.stringify(starCache, null, "\t"));
+
+const totalStars = starCache.total;
 
 let cloneCache: CloneCache = {
   trackingStartedAt: null,
@@ -723,4 +755,3 @@ const svg = `
 
 fs.mkdirSync("assets", { recursive: true });
 fs.writeFileSync("assets/github-stats.svg", svg);
-
