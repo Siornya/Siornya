@@ -161,6 +161,7 @@ const EXT_LANGUAGE: Record<string, string> = {
   json: "JSON", yaml: "YAML", yml: "YAML", toml: "TOML",
   md: "Markdown", mdx: "MDX", tex: "TeX",
   ipynb: "Jupyter Notebook", sol: "Solidity", zig: "Zig",
+  qml: "QML",
 };
 
 const IGNORED_FILES = new Set([
