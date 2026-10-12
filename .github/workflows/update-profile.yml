@@ -41,7 +41,7 @@ jobs:
           git -C stats-data config user.name "github-actions[bot]"
           git -C stats-data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git -C stats-data add contrib-cache.json clone-cache.json
+          git -C stats-data add contrib-cache-v2.json clone-cache.json star-cache.json
 
           if git -C stats-data diff --cached --quiet; then
             echo "No private stats data changes to commit."
