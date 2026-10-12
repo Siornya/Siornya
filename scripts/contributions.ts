@@ -38,7 +38,7 @@ interface CommitDetail {
 	files?: Array<{ filename: string; additions?: number; deletions?: number }>;
 }
 
-export const CONTRIB_EXCLUDE = new Set(["Markdown", "MDX", "YAML", "JSON", "TOML", "TeX", "CSS"]);
+export const CONTRIB_EXCLUDE = new Set(["Markdown", "MDX", "YAML", "JSON", "TOML", "TeX", "CSS", "HTML"]);
 
 export function createCache(login: string): ContributionCache {
 	return { version: 2, login, initialized: false, commits: {}, scannedHeads: [] };
