@@ -65,14 +65,14 @@ function renderColumn({ rows, total }: RowsData, colX: number, title: string): s
 	rows.forEach(([name, size], index) => {
 		const percent = ((size / total) * 100).toFixed(1);
 		const barWidth = (size / total) * 140;
-		const y = 132 + index * 32;
+		const y = 144 + index * 32;
 		const color = languageColor(name, index);
 		const isOthers = name === "Others";
 		out += `
 			<circle cx="${colX - 8}" cy="${y - 4}" r="3.5" fill="${color}"${isOthers ? ' opacity="0.7"' : ""}/>
 			<text x="${colX}" y="${y}" class="lang"${isOthers ? ' opacity="0.7"' : ""}>${escapeXml(name)}</text>
-			<rect x="${colX + 130}" y="${y - 14}" width="140" height="11" rx="5.5" fill="#eadfe5"/>
-			<rect x="${colX + 130}" y="${y - 14}" width="${barWidth}" height="11" rx="5.5" fill="${color}"${isOthers ? ' opacity="0.75"' : ""}/>
+			<rect x="${colX + 130}" y="${y - 10}" width="140" height="11" rx="5.5" fill="#eadfe5"/>
+			<rect x="${colX + 130}" y="${y - 10}" width="${barWidth}" height="11" rx="5.5" fill="${color}"${isOthers ? ' opacity="0.75"' : ""}/>
 			<text x="${colX + 280}" y="${y}" class="percent">${percent}%</text>`;
 	});
 	return out;
@@ -117,12 +117,6 @@ export function renderStats(data: StatsCardData): string {
 		return String(values[key]);
 	});
 
-	// Move the overview bar slightly upward and keep its clipping rectangle aligned.
-	// This is done here so the existing SVG template does not need a separate edit.
-	svg = svg.replace(
-		'<rect x="390" y="102" width="316" height="8" rx="4"/>',
-		'<rect x="390" y="96" width="316" height="8" rx="4"/>',
-	);
 	// Draw the segmented overview bar; language rows start 6px lower for clearer spacing.
 	svg = svg.replace("</svg>", `${renderLanguageMix(contributions)}</svg>`);
 	if (/{{\w+}}/.test(svg)) throw new Error("Unresolved SVG template placeholder");

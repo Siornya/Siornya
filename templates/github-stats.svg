@@ -14,7 +14,7 @@
 			<rect x="1" y="1" width="758" height="350" rx="25"/>
 		</clipPath>
 		<clipPath id="mixClip">
-			<rect x="390" y="102" width="316" height="8" rx="4"/>
+			<rect x="390" y="96" width="316" height="8" rx="4"/>
 		</clipPath>
 	</defs>
 	<style>
