@@ -20,33 +20,64 @@ interface Repo { nameWithOwner: string; isFork: boolean; stargazerCount: number;
 interface StarCache { total:number; lastCount:number }
 interface CloneCache { trackingStartedAt: string | null; total:number; lastCountedDate:string | null }
 interface CloneTraffic { clones: Array<{timestamp:string;count:number}> }
+
 let rateLimited = false;
+let lastSearchAt = 0;
+const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
 async function ghRestPage<T>(apiPath:string):Promise<ApiPage<T> | null> {
   if (rateLimited) return null;
-  const res = await fetch(`${GH_API}${apiPath}`, {
-    headers:{authorization:`token ${token}`, accept:"application/vnd.github+json", "user-agent":"siornya-stats"}
-  });
-  const remaining = Number(res.headers.get("x-ratelimit-remaining") ?? "1");
-  if (res.status === 429 || (res.status === 403 && (remaining === 0 || res.headers.has("retry-after")))) {
-    rateLimited = true;
-    console.warn("GitHub REST API rate limited");
-    return null;
+  const isSearch = apiPath.startsWith("/search/");
+  // Search API has a separate, much smaller quota. Pace requests instead of
+  // applying the arbitrary remaining<40 cutoff.
+  if (isSearch) {
+    const wait = 2200 - (Date.now() - lastSearchAt);
+    if (wait > 0) await sleep(wait);
+    lastSearchAt = Date.now();
   }
-  if (!res.ok) {
-    if (res.status === 409 && /\/(branches|commits)\?/.test(apiPath)) return { data: [] as T, next:null };
-    if (res.status === 404) return null;
-    throw new Error(`GitHub API: ${res.status} ${res.statusText} for ${apiPath}`);
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await fetch(`${GH_API}${apiPath}`, {
+      headers:{authorization:`token ${token}`, accept:"application/vnd.github+json", "user-agent":"siornya-stats"}
+    });
+    const remaining = Number(res.headers.get("x-ratelimit-remaining") ?? "-1");
+    const reset = Number(res.headers.get("x-ratelimit-reset") ?? "0");
+    const retryAfter = Number(res.headers.get("retry-after") ?? "0");
+    const limited = res.status === 429 ||
+      (res.status === 403 && (remaining === 0 || res.headers.has("retry-after")));
+
+    if (limited) {
+      const delay = retryAfter > 0 ? retryAfter * 1000 :
+        remaining === 0 && reset > 0 ? Math.max(1000, reset * 1000 - Date.now() + 1000) :
+        15000 * (attempt + 1);
+      console.warn(`GitHub REST rate limit (resource=${res.headers.get("x-ratelimit-resource") ?? "unknown"}); retry ${attempt + 1}/3 in ${Math.ceil(delay/1000)}s`);
+      // Avoid waiting a long time on an Actions runner. The caller preserves
+      // completed cache progress and fails the incomplete run clearly.
+      if (attempt === 2 || delay > 120000) {
+        rateLimited = true;
+        return null;
+      }
+      await sleep(delay);
+      if (isSearch) lastSearchAt = Date.now();
+      continue;
+    }
+
+    if (!res.ok) {
+      if (res.status === 409 && /\/(branches|commits)\?/.test(apiPath)) return { data: [] as T, next:null };
+      if (res.status === 404) return null;
+      throw new Error(`GitHub API: ${res.status} ${res.statusText} for ${apiPath}`);
+    }
+    const nextUrl = res.headers.get("link")?.match(/<([^>]+)>; rel="next"/)?.[1];
+    let next: string | null = null;
+    if (nextUrl) {
+      const url = new URL(nextUrl);
+      if (url.origin !== GH_API) throw new Error("Unexpected pagination origin");
+      next = url.pathname + url.search;
+    }
+    return {data:await res.json() as T,next};
   }
-  if (remaining > 0 && remaining < 40) rateLimited = true;
-  const nextUrl = res.headers.get("link")?.match(/<([^>]+)>; rel="next"/)?.[1];
-  let next: string | null = null;
-  if (nextUrl) {
-    const url = new URL(nextUrl);
-    if (url.origin !== GH_API) throw new Error("Unexpected pagination origin");
-    next = url.pathname + url.search;
-  }
-  return {data:await res.json() as T,next};
+  rateLimited = true;
+  return null;
 }
 async function ghRest<T>(url:string):Promise<T|null> { return (await ghRestPage<T>(url))?.data ?? null; }
 function save(filename:string, value:unknown) {
@@ -64,7 +95,6 @@ const login = viewer.login;
 const createdYear = new Date(viewer.createdAt).getUTCFullYear();
 const nowYear = new Date().getUTCFullYear();
 
-// Stars, Clones and own original repositories: OWNER only, never enumerate other people's private forks.
 async function getOwnedRepositories():Promise<Repo[]> {
   const query = `query($cursor:String,$privacy:RepositoryPrivacy!) {
     viewer { repositories(first:100,after:$cursor,affiliations:[OWNER],privacy:$privacy) {
@@ -85,7 +115,6 @@ async function getOwnedRepositories():Promise<Repo[]> {
   return [...new Map(result.map(x=>[x.nameWithOwner,x])).values()];
 }
 
-// Only the explicitly selected organization. Its forks are excluded to keep the contribution rule consistent.
 async function getOrganizationRepositories():Promise<string[]> {
   const q = `query($cursor:String,$login:String!) {
     organization(login:$login) { repositories(first:100,after:$cursor,isFork:false) {
@@ -109,7 +138,6 @@ const owned=await getOwnedRepositories();
 const orgRepos=await getOrganizationRepositories();
 console.log(`Scanning ${owned.length} owned original repos and ${orgRepos.length} selected organization repos`);
 
-// Maintain original cumulative Stars behavior.
 const currentStars=owned.reduce((sum,r)=>sum+r.stargazerCount,0);
 let starCache:StarCache={total:0,lastCount:0};
 try {
@@ -121,7 +149,6 @@ starCache.total+=Math.max(0,currentStars-starCache.lastCount);
 starCache.lastCount=currentStars;
 save(STAR_FILE,starCache);
 
-// Maintain original date-deduplicated Clones behavior.
 let cloneCache:CloneCache={trackingStartedAt:null,total:0,lastCountedDate:null};
 try {
   const c=JSON.parse(fs.readFileSync(CLONE_FILE,"utf8")) as CloneCache;
@@ -149,7 +176,6 @@ if(cloneComplete){
 }else console.warn("Incomplete clone scan: keeping old total");
 save(CLONE_FILE,cloneCache);
 
-// GitHub account-wide contribution counts; no repository discovery is performed here.
 const contribQuery=`query($from:DateTime!,$to:DateTime!) {
   viewer { contributionsCollection(from:$from,to:$to) {
     contributionCalendar {totalContributions}
@@ -168,12 +194,11 @@ for(let year=createdYear;year<=nowYear;year++){
   totalIssues+=c.totalIssueContributions;
 }
 
-// The two sources are disjoint by owner: default-branch Commit scans own original + selected org;
-// PR scan skips these owners and only counts accepted contributions elsewhere.
 const repoNames = new Set([...owned.map(r=>r.nameWithOwner),...orgRepos]);
 const commitLangs=await getContributionStats(repoNames,login,DATA_DIR,ghRestPage,()=>rateLimited,COUNT_MODE);
 const prLangs=await getPrContributionStats(login,viewer.createdAt,DATA_DIR,ghRestPage,
   new Set([login.toLowerCase(),ORG_LOGIN.toLowerCase()]),()=>rateLimited,COUNT_MODE);
+
 if(commitLangs!==null&&prLangs!==null){
   const langs=new Map(commitLangs);
   for(const [language,count] of prLangs)langs.set(language,(langs.get(language)??0)+count);
@@ -182,4 +207,6 @@ if(commitLangs!==null&&prLangs!==null){
   fs.mkdirSync("assets",{recursive:true});
   fs.writeFileSync("assets/github-stats.svg",svg);
   console.log("Statistics generated",{commitLines,owned:owned.length,orgRepos:orgRepos.length});
-}else console.warn("Contribution baseline incomplete: SVG left unchanged");
+}else{
+  throw new Error("Contribution collection incomplete; SVG not generated. Completed cache progress has been retained.");
+}
