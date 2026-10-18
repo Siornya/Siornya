@@ -1,5 +1,5 @@
-<svg width="760" height="334"
-	viewBox="0 0 760 334" xmlns="http://www.w3.org/2000/svg">
+<svg width="760" height="352"
+	viewBox="0 0 760 352" xmlns="http://www.w3.org/2000/svg">
 	<defs>
 		<linearGradient id="cardBackground" x1="0" y1="0" x2="1" y2="1">
 			<stop offset="0" stop-color="#fffaf8"/>
@@ -85,7 +85,7 @@
 	</g>
 	<text x="44" y="146" class="metric">
 		Commits
-		<tspan x="308" text-anchor="end" class="metric-value" style="font-size:18px">459</tspan>
+		<tspan x="308" text-anchor="end" class="metric-value" style="font-size:18px">460</tspan>
 	</text>
 
 	<text x="44" y="178" class="metric">
@@ -110,33 +110,39 @@
 
 	<text x="44" y="306" class="metric">
 		Contribution lines
-		<tspan x="308" text-anchor="end" class="metric-value" style="font-size:16px">71,262</tspan>
+		<tspan x="308" text-anchor="end" class="metric-value" style="font-size:16px">71,345</tspan>
 	</text>
 
 
-		<text x="390" y="82" class="text">My Contributions</text>
+		<text x="390" y="82" class="section-title">My Contributions</text>
+			<circle cx="382" cy="122" r="3.5" fill="#b45f82"/>
 			<text x="390" y="126" class="lang">C++</text>
-			<rect x="520" y="112" width="140" height="11" rx="5.5" fill="#ffffff18"/>
-			<rect x="520" y="112" width="49.02219976986332" height="11" rx="5.5" fill="url(#barGradient)"/>
+			<rect x="520" y="112" width="140" height="11" rx="5.5" fill="#eadfe5"/>
+			<rect x="520" y="112" width="48.96516924802019" height="11" rx="5.5" fill="#b45f82"/>
 			<text x="670" y="126" class="percent">35.0%</text>
+			<circle cx="382" cy="154" r="3.5" fill="#63a995"/>
 			<text x="390" y="158" class="lang">Vue</text>
-			<rect x="520" y="144" width="140" height="11" rx="5.5" fill="#ffffff18"/>
-			<rect x="520" y="144" width="30.08952878111757" height="11" rx="5.5" fill="url(#barGradient)"/>
+			<rect x="520" y="144" width="140" height="11" rx="5.5" fill="#eadfe5"/>
+			<rect x="520" y="144" width="30.05452379283762" height="11" rx="5.5" fill="#63a995"/>
 			<text x="670" y="158" class="percent">21.5%</text>
+			<circle cx="382" cy="186" r="3.5" fill="#6f9fc2"/>
 			<text x="390" y="190" class="lang">Python</text>
-			<rect x="520" y="176" width="140" height="11" rx="5.5" fill="#ffffff18"/>
-			<rect x="520" y="176" width="23.82447868429177" height="11" rx="5.5" fill="url(#barGradient)"/>
+			<rect x="520" y="176" width="140" height="11" rx="5.5" fill="#eadfe5"/>
+			<rect x="520" y="176" width="23.79676221178779" height="11" rx="5.5" fill="#6f9fc2"/>
 			<text x="670" y="190" class="percent">17.0%</text>
+			<circle cx="382" cy="218" r="3.5" fill="#5d8db8"/>
 			<text x="390" y="222" class="lang">TypeScript</text>
-			<rect x="520" y="208" width="140" height="11" rx="5.5" fill="#ffffff18"/>
-			<rect x="520" y="208" width="16.553562908703096" height="11" rx="5.5" fill="url(#barGradient)"/>
-			<text x="670" y="222" class="percent">11.8%</text>
+			<rect x="520" y="208" width="140" height="11" rx="5.5" fill="#eadfe5"/>
+			<rect x="520" y="208" width="16.697175695563807" height="11" rx="5.5" fill="#5d8db8"/>
+			<text x="670" y="222" class="percent">11.9%</text>
+			<circle cx="382" cy="250" r="3.5" fill="#d28aab"/>
 			<text x="390" y="254" class="lang">C</text>
-			<rect x="520" y="240" width="140" height="11" rx="5.5" fill="#ffffff18"/>
-			<rect x="520" y="240" width="8.618618618618619" height="11" rx="5.5" fill="url(#barGradient)"/>
-			<text x="670" y="254" class="percent">6.2%</text>
+			<rect x="520" y="240" width="140" height="11" rx="5.5" fill="#eadfe5"/>
+			<rect x="520" y="240" width="8.60859205270166" height="11" rx="5.5" fill="#d28aab"/>
+			<text x="670" y="254" class="percent">6.1%</text>
+			<circle cx="382" cy="282" r="3.5" fill="#d9c3ce" opacity="0.7"/>
 			<text x="390" y="286" class="lang" opacity="0.7">Others</text>
-			<rect x="520" y="272" width="140" height="11" rx="5.5" fill="#ffffff18"/>
-			<rect x="520" y="272" width="11.89161123740563" height="11" rx="5.5" fill="#ffffff30"/>
+			<rect x="520" y="272" width="140" height="11" rx="5.5" fill="#eadfe5"/>
+			<rect x="520" y="272" width="11.877776999088933" height="11" rx="5.5" fill="#d9c3ce" opacity="0.75"/>
 			<text x="670" y="286" class="percent">8.5%</text>
-</svg>
+<g clip-path="url(#mixClip)"><rect x="390" y="102" width="110.52138201695985" height="8" fill="#b45f82"/><rect x="500.5213820169598" y="102" width="67.83735370383349" height="8" fill="#63a995"/><rect x="568.3587357207933" y="102" width="53.71269184946387" height="8" fill="#6f9fc2"/><rect x="622.0714275702572" y="102" width="37.68791085570117" height="8" fill="#5d8db8"/><rect x="659.7593384259584" y="102" width="19.430822061812318" height="8" fill="#d28aab"/><rect x="679.1901604877708" y="102" width="26.80983951222931" height="8" fill="#d9c3ce"/></g></svg>
