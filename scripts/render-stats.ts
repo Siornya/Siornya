@@ -53,7 +53,7 @@ function renderLanguageMix({ rows, total }: RowsData): string {
 	const width = 316;
 	const segments = rows.map(([name, value], index) => {
 		const segmentWidth = (value / total) * width;
-		const rect = `<rect x="${x}" y="102" width="${segmentWidth}" height="8" fill="${languageColor(name, index)}"/>`;
+		const rect = `<rect x="${x}" y="96" width="${segmentWidth}" height="8" fill="${languageColor(name, index)}"/>`;
 		x += segmentWidth;
 		return rect;
 	});
@@ -65,7 +65,7 @@ function renderColumn({ rows, total }: RowsData, colX: number, title: string): s
 	rows.forEach(([name, size], index) => {
 		const percent = ((size / total) * 100).toFixed(1);
 		const barWidth = (size / total) * 140;
-		const y = 126 + index * 32;
+		const y = 132 + index * 32;
 		const color = languageColor(name, index);
 		const isOthers = name === "Others";
 		out += `
@@ -117,7 +117,13 @@ export function renderStats(data: StatsCardData): string {
 		return String(values[key]);
 	});
 
-	// The template already defines mixClip; draw the segmented language overview bar.
+	// Move the overview bar slightly upward and keep its clipping rectangle aligned.
+	// This is done here so the existing SVG template does not need a separate edit.
+	svg = svg.replace(
+		'<rect x="390" y="102" width="316" height="8" rx="4"/>',
+		'<rect x="390" y="96" width="316" height="8" rx="4"/>',
+	);
+	// Draw the segmented overview bar; language rows start 6px lower for clearer spacing.
 	svg = svg.replace("</svg>", `${renderLanguageMix(contributions)}</svg>`);
 	if (/{{\w+}}/.test(svg)) throw new Error("Unresolved SVG template placeholder");
 	if (!svg.includes('id="mixClip"')) throw new Error("SVG template is missing mixClip");

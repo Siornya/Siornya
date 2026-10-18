@@ -25,7 +25,7 @@ export const CONTRIB_EXCLUDE = new Set(["Markdown", "MDX", "YAML", "JSON", "TOML
 const EXT_LANGUAGE: Record<string, string> = {
   js:"JavaScript",jsx:"JavaScript",mjs:"JavaScript",cjs:"JavaScript",ts:"TypeScript",tsx:"TypeScript",
   py:"Python",pyw:"Python",java:"Java",kt:"Kotlin",kts:"Kotlin",scala:"Scala",groovy:"Groovy",
-  c:"C",h:"C",cpp:"C++",cc:"C++",cxx:"C++",hpp:"C++",hh:"C++",hxx:"C++",cs:"C#",
+  c:"C",h:"C",cpp:"C++",cc:"C++",cxx:"C++",hpp:"C++",hh:"C++",hxx:"C++",cppm:"C++",cs:"C#",
   go:"Go",rs:"Rust",rb:"Ruby",php:"PHP",swift:"Swift",dart:"Dart",m:"Objective-C",mm:"Objective-C++",
   sh:"Shell",bash:"Shell",zsh:"Shell",ps1:"PowerShell",lua:"Lua",r:"R",jl:"Julia",pl:"Perl",
   ex:"Elixir",exs:"Elixir",erl:"Erlang",hs:"Haskell",clj:"Clojure",elm:"Elm",nim:"Nim",
