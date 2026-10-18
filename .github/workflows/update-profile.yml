@@ -31,7 +31,7 @@ jobs:
         run: |
           git -C stats-data config user.name "github-actions[bot]"
           git -C stats-data config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          for file in contrib-cache-v3.json pr-cache.json clone-cache.json star-cache.json; do
+          for file in contrib-cache.json pr-cache.json clone-cache.json star-cache.json; do
             if [ -f "stats-data/$file" ]; then git -C stats-data add "$file"; fi
           done
           if git -C stats-data diff --cached --quiet; then

@@ -168,7 +168,7 @@ for(let year=createdYear;year<=nowYear;year++){
   totalIssues+=c.totalIssueContributions;
 }
 
-// The two sources are disjoint by owner: Commit scans own original + selected org;
+// The two sources are disjoint by owner: default-branch Commit scans own original + selected org;
 // PR scan skips these owners and only counts accepted contributions elsewhere.
 const repoNames = new Set([...owned.map(r=>r.nameWithOwner),...orgRepos]);
 const commitLangs=await getContributionStats(repoNames,login,DATA_DIR,ghRestPage,()=>rateLimited,COUNT_MODE);
